@@ -4,16 +4,28 @@ import Layout from '../../components/layout/Layout';
 import Input from '../../components/common/Input';
 import Textarea from '../../components/common/Textarea';
 import Button from '../../components/common/Button';
-import type { PostFormData } from '../../types';
+import CategorySelector from '../../components/common/CategorySelector';
+import TagSelector from '../../components/common/TagSelector';
+import ImageUpload from '../../components/common/ImageUpload';
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
+import type { PostFormData, Post } from '../../types';
+import { getCategoryById, getTagsByIds } from '../../utils/categoryUtils';
 
 const WritePost: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { showToast } = useToast();
   const [formData, setFormData] = useState<PostFormData>({
     title: '',
-    content: ''
+    content: '',
+    categoryId: undefined,
+    tags: [],
+    images: []
   });
   const [errors, setErrors] = useState<Partial<PostFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   const handleInputChange = (field: keyof PostFormData, value: string) => {
     setFormData(prev => ({
@@ -28,6 +40,27 @@ const WritePost: React.FC = () => {
         [field]: undefined
       }));
     }
+  };
+
+  const handleCategoryChange = (categoryId: string | undefined) => {
+    setFormData(prev => ({
+      ...prev,
+      categoryId
+    }));
+  };
+
+  const handleTagsChange = (tagIds: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      tags: tagIds
+    }));
+  };
+
+  const handleImagesChange = (images: string[]) => {
+    setFormData(prev => ({
+      ...prev,
+      images
+    }));
   };
 
   const validateForm = (): boolean => {
@@ -48,24 +81,48 @@ const WritePost: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!user) {
+      showToast('로그인이 필요합니다.', 'error');
+      navigate('/login');
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
-
+    
     try {
-      // TODO: 실제 API 호출로 대체
-      console.log('글 작성:', formData);
-      
-      // 임시로 성공 처리
-      setTimeout(() => {
-        alert('글이 성공적으로 작성되었습니다!');
-        navigate('/posts');
-      }, 1000);
+      // 카테고리와 태그 데이터 가져오기
+      const category = formData.categoryId ? getCategoryById(formData.categoryId) : undefined;
+      const tags = getTagsByIds(formData.tags || []);
+
+      // 새 글 생성
+      const newPost: Post = {
+        id: Date.now().toString(),
+        title: formData.title,
+        content: formData.content,
+        author: user,
+        category,
+        tags,
+        images: formData.images || [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        viewCount: 0,
+        likeCount: 0,
+        status: 'published'
+      };
+
+      // localStorage에 저장
+      const existingPosts = JSON.parse(localStorage.getItem('posts') || '[]');
+      localStorage.setItem('posts', JSON.stringify([newPost, ...existingPosts]));
+
+      showToast('글이 성공적으로 작성되었습니다!', 'success');
+      navigate('/posts');
     } catch (error) {
       console.error('글 작성 실패:', error);
-      alert('글 작성에 실패했습니다. 다시 시도해주세요.');
+      showToast('글 작성에 실패했습니다. 다시 시도해주세요.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -113,6 +170,35 @@ const WritePost: React.FC = () => {
               error={errors.content}
               rows={15}
               required
+            />
+          </div>
+
+          {/* 카테고리 선택 */}
+          <div>
+            <CategorySelector
+              selectedCategoryId={formData.categoryId}
+              onChange={handleCategoryChange}
+              allowEmpty={true}
+            />
+          </div>
+
+          {/* 태그 선택 */}
+          <div>
+            <TagSelector
+              selectedTags={formData.tags || []}
+              onChange={handleTagsChange}
+              maxTags={10}
+              allowCreate={true}
+            />
+          </div>
+
+          {/* 이미지 업로드 */}
+          <div>
+            <ImageUpload
+              onImagesChange={handleImagesChange}
+              existingImages={formData.images || []}
+              maxImages={5}
+              maxSizeMB={5}
             />
           </div>
 

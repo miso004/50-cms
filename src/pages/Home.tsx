@@ -9,7 +9,7 @@ const Home: React.FC = () => {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            당신의 생각을 자유롭게 표현하세요
+            우리의 생각을 자유롭게 표현합시다.
           </h2>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
             간단하고 직관적인 글쓰기 플랫폼에서 여러분의 아이디어를 세상과 공유해보세요.

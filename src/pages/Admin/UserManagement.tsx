@@ -2,6 +2,19 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../../components/layout/Layout';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faUsers, 
+  faSearch, 
+  faUserShield, 
+  faUser, 
+  faTrash, 
+  faCalendarAlt,
+  faFilter,
+  faUserPlus,
+  faEdit,
+  faCrown
+} from '@fortawesome/free-solid-svg-icons';
 import { UserRole } from '../../types';
 import type { User, UserRoleType } from '../../types';
 
@@ -153,61 +166,158 @@ const UserManagement: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 헤더 */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">사용자 관리</h1>
-          <p className="text-gray-600">사용자 목록 및 권한을 관리하세요.</p>
+          <div className="flex items-center mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
+              <FontAwesomeIcon icon={faUsers} className="text-white text-xl" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-black text-gray-900">사용자 관리</h1>
+              <p className="text-gray-600 mt-1">사용자 목록 및 권한을 관리하세요</p>
+            </div>
+          </div>
+          
+          {/* 통계 요약 */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+            <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                  <FontAwesomeIcon icon={faUsers} className="text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">전체 사용자</p>
+                  <p className="text-xl font-bold text-gray-900">{users.length}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mr-3">
+                  <FontAwesomeIcon icon={faCrown} className="text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">관리자</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {users.filter(u => u.role === UserRole.ADMIN).length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                  <FontAwesomeIcon icon={faUser} className="text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">일반 사용자</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    {users.filter(u => u.role === UserRole.USER).length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <div className="flex items-center">
+                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                  <FontAwesomeIcon icon={faCalendarAlt} className="text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">이번주 신규</p>
+                  <p className="text-xl font-bold text-gray-900">3</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* 필터 및 검색 */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Input
-                label="검색"
-                type="text"
-                placeholder="사용자명 또는 이메일로 검색"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+          <div className="flex items-center mb-4">
+            <FontAwesomeIcon icon={faFilter} className="text-gray-600 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900">검색 및 필터</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-2">
+              <div className="relative">
+                <FontAwesomeIcon 
+                  icon={faSearch} 
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
+                />
+                <input
+                  type="text"
+                  placeholder="사용자명 또는 이메일로 검색..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
+              </div>
             </div>
+            
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                <FontAwesomeIcon icon={faUserShield} className="mr-1" />
                 권한 필터
               </label>
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               >
                 <option value="all">모든 권한</option>
                 <option value={UserRole.ADMIN}>관리자</option>
                 <option value={UserRole.USER}>일반사용자</option>
               </select>
             </div>
+            
             <div className="flex items-end">
-              <Button className="w-full">
-                필터 적용
+              <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-xl py-3">
+                <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                새 사용자
               </Button>
             </div>
+          </div>
+          
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+            <span>총 {filteredUsers.length}명의 사용자가 검색되었습니다</span>
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="text-blue-600 hover:text-blue-700 underline"
+              >
+                검색 조건 초기화
+              </button>
+            )}
           </div>
         </div>
 
         {/* 사용자 목록 */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
-              사용자 목록 ({filteredUsers.length}명)
-            </h2>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center">
+                <FontAwesomeIcon icon={faUsers} className="mr-2 text-blue-600" />
+                사용자 목록 ({filteredUsers.length}명)
+              </h2>
+              <div className="text-sm text-gray-500">
+                마지막 업데이트: {new Date().toLocaleDateString('ko-KR')}
+              </div>
+            </div>
           </div>
           
           {filteredUsers.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-400 mb-4">
-                <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FontAwesomeIcon icon={faUsers} className="text-gray-400 text-2xl" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">사용자가 없습니다</h3>
-              <p className="text-gray-600">검색 조건에 맞는 사용자가 없습니다.</p>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">사용자가 없습니다</h3>
+              <p className="text-gray-600 mb-6">검색 조건에 맞는 사용자가 없습니다.</p>
+              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0">
+                <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                첫 번째 사용자 추가하기
+              </Button>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -233,16 +343,23 @@ const UserManagement: React.FC = () => {
                     <tr key={user.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
-                            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                              <span className="text-sm font-medium text-gray-700">
+                          <div className="flex-shrink-0 h-12 w-12">
+                            <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                              <span className="text-lg font-bold text-white">
                                 {user.username.charAt(0).toUpperCase()}
                               </span>
                             </div>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-bold text-gray-900 flex items-center">
                               {user.username}
+                              {user.role === UserRole.ADMIN && (
+                                <FontAwesomeIcon 
+                                  icon={faCrown} 
+                                  className="ml-2 text-yellow-500" 
+                                  title="관리자"
+                                />
+                              )}
                             </div>
                             <div className="text-sm text-gray-500">
                               {user.email}
@@ -251,19 +368,26 @@ const UserManagement: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(user.role)}`}>
+                        <span className={`inline-flex items-center px-3 py-1 text-xs font-bold rounded-full ${getRoleBadgeColor(user.role)}`}>
+                          <FontAwesomeIcon 
+                            icon={user.role === UserRole.ADMIN ? faUserShield : faUser} 
+                            className="mr-1" 
+                          />
                           {getRoleLabel(user.role)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(user.createdAt)}
+                        <div className="flex items-center">
+                          <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+                          {formatDate(user.createdAt)}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
+                        <div className="flex space-x-3">
                           <select
                             value={user.role || UserRole.USER}
                             onChange={(e) => handleRoleChange(user.id, e.target.value as UserRoleType)}
-                            className="text-sm border border-gray-300 rounded px-2 py-1"
+                            className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                           >
                             <option value={UserRole.USER}>일반사용자</option>
                             <option value={UserRole.ADMIN}>관리자</option>
@@ -272,7 +396,9 @@ const UserManagement: React.FC = () => {
                             variant="danger"
                             size="sm"
                             onClick={() => handleDeleteUser(user.id)}
+                            className="hover:shadow-lg transition-all"
                           >
+                            <FontAwesomeIcon icon={faTrash} className="mr-1" />
                             삭제
                           </Button>
                         </div>

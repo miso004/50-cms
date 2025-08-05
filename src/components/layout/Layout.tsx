@@ -1,6 +1,16 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faHome, 
+  faList, 
+  faPenToSquare, 
+  faCog, 
+  faSignOutAlt, 
+  faSignInAlt,
+  faUserPlus 
+} from '@fortawesome/free-solid-svg-icons';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -17,95 +27,147 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
             <div className="flex items-center">
-              <Link to="/" className="text-2xl font-bold text-gray-900">
-                글쓰기 플랫폼
+              <Link to="/" className="flex items-center space-x-2 text-2xl font-black text-gray-900 hover:text-purple-600 transition-colors">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white text-sm font-bold">W</span>
+                </div>
+                <span>WIDSoft</span>
               </Link>
             </div>
             
-            <nav className="flex space-x-8">
+            {/* 데스크톱 네비게이션 */}
+            <nav className="hidden md:flex items-center space-x-1">
               <Link
                 to="/"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center space-x-2 ${
                   isActive('/') 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'text-purple-600 bg-purple-50 shadow-sm' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50/50'
                 }`}
               >
-                홈
+                <FontAwesomeIcon icon={faHome} />
+                <span>홈</span>
               </Link>
               
               <Link
                 to="/posts"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center space-x-2 ${
                   isActive('/posts') 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'text-purple-600 bg-purple-50 shadow-sm' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50/50'
                 }`}
               >
-                글 목록
+                <FontAwesomeIcon icon={faList} />
+                <span>글목록</span>
               </Link>
               
               <Link
                 to="/write"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center space-x-2 ${
                   isActive('/write') 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'text-purple-600 bg-purple-50 shadow-sm' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50/50'
                 }`}
               >
-                글쓰기
+                <FontAwesomeIcon icon={faPenToSquare} />
+                <span>글쓰기</span>
               </Link>
-              
-              {/* 관리자 페이지 링크 - 모든 사용자에게 표시 */}
+            </nav>
+            
+            {/* 모바일 네비게이션 */}
+            <nav className="md:hidden flex items-center space-x-1">
               <Link
-                to="/admin"
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-1 ${
-                  location.pathname.startsWith('/admin') 
-                    ? 'text-blue-600 bg-blue-50' 
-                    : 'text-gray-600 hover:text-gray-900'
+                to="/"
+                className={`p-2 rounded-lg text-sm transition-all duration-200 ${
+                  isActive('/') 
+                    ? 'text-purple-600 bg-purple-50' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50/50'
                 }`}
-                title="관리자 페이지"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                <span>관리자</span>
+                <FontAwesomeIcon icon={faHome} />
               </Link>
               
+              <Link
+                to="/posts"
+                className={`p-2 rounded-lg text-sm transition-all duration-200 ${
+                  isActive('/posts') 
+                    ? 'text-purple-600 bg-purple-50' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50/50'
+                }`}
+              >
+                <FontAwesomeIcon icon={faList} />
+              </Link>
+              
+              <Link
+                to="/write"
+                className={`p-2 rounded-lg text-sm transition-all duration-200 ${
+                  isActive('/write') 
+                    ? 'text-purple-600 bg-purple-50' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50/50'
+                }`}
+              >
+                <FontAwesomeIcon icon={faPenToSquare} />
+              </Link>
+              
+
+            </nav>
+            
+            {/* 사용자 메뉴 */}
+            <div className="flex items-center space-x-3">
               {user ? (
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-700">{user.username}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-3 bg-gray-100 rounded-2xl px-4 py-2">
+                    <Link to="/profile" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-bold">{user.username.charAt(0).toUpperCase()}</span>
+                      </div>
+                      <span className="text-sm font-semibold text-gray-700">{user.username}</span>
+                    </Link>
                     <button
                       onClick={logout}
-                      className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                      className="text-sm text-gray-500 hover:text-red-600 transition-colors ml-2"
+                      title="로그아웃"
                     >
-                      로그아웃
+                      <FontAwesomeIcon icon={faSignOutAlt} />
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="flex space-x-4">
+                <div className="flex items-center space-x-3">
                   <Link
                     to="/login"
-                    className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    className="text-gray-600 hover:text-purple-600 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-purple-50/50 flex items-center space-x-2"
                   >
-                    로그인
+                    <FontAwesomeIcon icon={faSignInAlt} />
+                    <span>로그인</span>
                   </Link>
                   <Link
                     to="/signup"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    className="text-gray-600 hover:text-purple-600 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-purple-50/50 flex items-center space-x-2"
                   >
-                    회원가입
+                    <FontAwesomeIcon icon={faUserPlus} />
+                    <span>회원가입</span>
                   </Link>
                 </div>
               )}
-            </nav>
+              
+              {/* 관리자 아이콘 - 회원가입 오른쪽에 위치 */}
+              <Link
+                to="/admin"
+                className={`p-2 w-10 h-10 rounded-xl text-lg transition-all duration-200 flex items-center justify-center ${
+                  location.pathname.startsWith('/admin') 
+                    ? 'text-purple-600 bg-purple-50 shadow-sm' 
+                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50/50'
+                }`}
+                title="관리자 페이지"
+              >
+                <FontAwesomeIcon icon={faCog} />
+              </Link>
+            </div>
           </div>
         </div>
       </header>

@@ -5,7 +5,8 @@ import Button from '../common/Button';
 import { UserRole } from '../../types';
 
 const Header: React.FC = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, logout } = useAuth();
+  const isAuthenticated = !!user;
 
   const handleLogout = () => {
     if (confirm('정말로 로그아웃하시겠습니까?')) {
@@ -88,7 +89,7 @@ const Header: React.FC = () => {
                   </Button>
                 </Link>
                 <Link to="/signup">
-                  <Button size="sm">
+                  <Button variant="outline" size="sm">
                     회원가입
                   </Button>
                 </Link>

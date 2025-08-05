@@ -46,12 +46,36 @@ export interface AuthResponse {
   token: string;
 }
 
+// 카테고리 타입
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  color: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// 태그 타입
+export interface Tag {
+  id: string;
+  name: string;
+  slug: string;
+  color?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // 글 타입
 export interface Post {
   id: string;
   title: string;
   content: string;
   author: User;
+  category?: Category;
+  tags?: Tag[];
+  images?: string[]; // Base64 이미지 배열
   createdAt: Date;
   updatedAt: Date;
   viewCount: number;
@@ -74,14 +98,20 @@ export interface Comment {
   content: string;
   author: User;
   postId: string;
+  parentId?: string; // 답글용 부모 댓글 ID
   createdAt: Date;
   updatedAt: Date;
+  likeCount: number;
+  isLiked: boolean;
 }
 
 // 글 작성 폼 타입
 export interface PostFormData {
   title: string;
   content: string;
+  categoryId?: string;
+  tags?: string[];
+  images?: string[];
 }
 
 // API 응답 타입
