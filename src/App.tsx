@@ -15,6 +15,10 @@ import Dashboard from './pages/Admin/Dashboard';
 import UserManagement from './pages/Admin/UserManagement';
 import PostManagement from './pages/Admin/PostManagement';
 import CommentManagement from './pages/Admin/CommentManagement';
+import MenuManagement from './pages/Admin/MenuManagement';
+import Analytics from './pages/Admin/Analytics';
+import BackupManager from './pages/Admin/BackupManager';
+import SiteSettings from './pages/Admin/SiteSettings';
 import UserProfile from './pages/Profile/UserProfile';
 import NotFound from './pages/NotFound';
 
@@ -38,7 +42,10 @@ function App() {
             <Route path="/admin/users" element={<UserManagement />} />
             <Route path="/admin/posts" element={<PostManagement />} />
             <Route path="/admin/comments" element={<CommentManagement />} />
-            <Route path="/admin/settings" element={<div>사이트 설정 페이지 (개발 예정)</div>} />
+            <Route path="/admin/menus" element={<MenuManagement />} />
+            <Route path="/admin/analytics" element={<Analytics />} />
+            <Route path="/admin/backup" element={<BackupManager />} />
+            <Route path="/admin/settings" element={<SiteSettings />} />
             {/* 404 페이지 */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -71,10 +71,6 @@ export const validatePassword = (password: string): { isValid: boolean; message:
     return { isValid: false, message: '비밀번호는 최소 하나의 소문자를 포함해야 합니다.' };
   }
   
-  if (!/(?=.*[A-Z])/.test(password)) {
-    return { isValid: false, message: '비밀번호는 최소 하나의 대문자를 포함해야 합니다.' };
-  }
-  
   if (!/(?=.*\d)/.test(password)) {
     return { isValid: false, message: '비밀번호는 최소 하나의 숫자를 포함해야 합니다.' };
   }

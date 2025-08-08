@@ -23,7 +23,6 @@ import {
   getBookmarkedPosts,
   getUserLikes
 } from '../../utils/socialUtils';
-import { defaultCategories, defaultTags } from '../../utils/categoryUtils';
 
 type TabType = 'posts' | 'bookmarks' | 'liked';
 
@@ -47,33 +46,75 @@ const UserProfile: React.FC = () => {
     const loadUserData = async () => {
       setLoading(true);
       
-      // 사용자가 작성한 글들
-      const savedPosts = JSON.parse(localStorage.getItem('posts') || '[]');
-      const userWrittenPosts = savedPosts.filter((post: Post) => post.author.id === user.id);
-      setUserPosts(userWrittenPosts);
+      try {
+        // 사용자가 작성한 글들 - 안전한 처리
+        const savedPosts = JSON.parse(localStorage.getItem('posts') || '[]');
+        const userWrittenPosts = Array.isArray(savedPosts) 
+          ? savedPosts.filter((post: any) => post?.author?.id === user?.id) 
+          : [];
+        setUserPosts(userWrittenPosts);
 
-      // 사용자가 북마크한 글들
-      const bookmarked = getBookmarkedPosts(user.id);
-      setBookmarkedPosts(bookmarked);
+        // 사용자가 북마크한 글들 - 안전한 처리
+        try {
+          const bookmarked = getBookmarkedPosts(user.id);
+          setBookmarkedPosts(Array.isArray(bookmarked) ? bookmarked : []);
+        } catch (error) {
+          console.error('북마크 데이터 로딩 오류:', error);
+          setBookmarkedPosts([]);
+        }
 
-      // 사용자가 좋아요한 글들
-      const likedPostIds = getUserLikes(user.id);
-      const liked = savedPosts.filter((post: Post) => likedPostIds.includes(post.id));
-      setLikedPosts(liked);
+        // 사용자가 좋아요한 글들 - 안전한 처리
+        try {
+          const likedPostIds = getUserLikes(user.id);
+          const liked = Array.isArray(savedPosts) && Array.isArray(likedPostIds)
+            ? savedPosts.filter((post: any) => likedPostIds.includes(post?.id)) 
+            : [];
+          setLikedPosts(liked);
+        } catch (error) {
+          console.error('좋아요 데이터 로딩 오류:', error);
+          setLikedPosts([]);
+        }
 
-      // 통계 계산
-      const interactionStats = getUserInteractionStats(user.id);
-      const totalViews = userWrittenPosts.reduce((sum: number, post: Post) => sum + post.viewCount, 0);
-      const totalLikesReceived = userWrittenPosts.reduce((sum: number, post: Post) => sum + post.likeCount, 0);
+        // 통계 계산 - 안전한 처리
+        try {
+          const interactionStats = getUserInteractionStats(user.id);
+          const totalViews = userWrittenPosts.reduce((sum: number, post: any) => {
+            return sum + (post?.viewCount || 0);
+          }, 0);
+          const totalLikesReceived = userWrittenPosts.reduce((sum: number, post: any) => {
+            return sum + (post?.likeCount || 0);
+          }, 0);
 
-      setStats({
-        totalPosts: userWrittenPosts.length,
-        totalViews,
-        totalLikes: totalLikesReceived,
-        totalBookmarks: interactionStats.totalBookmarks
-      });
-
-      setLoading(false);
+          setStats({
+            totalPosts: userWrittenPosts.length,
+            totalViews,
+            totalLikes: totalLikesReceived,
+            totalBookmarks: interactionStats?.totalBookmarks || 0
+          });
+        } catch (error) {
+          console.error('통계 계산 오류:', error);
+          setStats({
+            totalPosts: userWrittenPosts.length,
+            totalViews: 0,
+            totalLikes: 0,
+            totalBookmarks: 0
+          });
+        }
+      } catch (error) {
+        console.error('사용자 데이터 로딩 오류:', error);
+        // 오류 발생 시 기본값 설정
+        setUserPosts([]);
+        setBookmarkedPosts([]);
+        setLikedPosts([]);
+        setStats({
+          totalPosts: 0,
+          totalViews: 0,
+          totalLikes: 0,
+          totalBookmarks: 0
+        });
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadUserData();
@@ -99,12 +140,20 @@ const UserProfile: React.FC = () => {
     );
   }
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    }).format(date);
+  const formatDate = (date: Date | string) => {
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) {
+        return '날짜 정보 없음';
+      }
+      return new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).format(dateObj);
+    } catch (error) {
+      return '날짜 정보 없음';
+    }
   };
 
   const formatNumber = (num: number) => {
@@ -126,90 +175,96 @@ const UserProfile: React.FC = () => {
     }
   };
 
-  const renderPostCard = (post: Post) => (
-    <article
-      key={post.id}
-      className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
-    >
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex-1">
-          {/* 카테고리 */}
-          {post.category && (
-            <span 
-              className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium text-white mb-2"
-              style={{ backgroundColor: post.category.color }}
-            >
-              <FontAwesomeIcon icon={faFolder} className="mr-1" />
-              {post.category.name}
+  const renderPostCard = (post: any) => {
+    if (!post || !post.id) {
+      return null;
+    }
+
+    return (
+      <article
+        key={post.id}
+        className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100"
+      >
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex-1">
+            {/* 카테고리 */}
+            {post.category && (
+              <span 
+                className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium text-white mb-2"
+                style={{ backgroundColor: post.category.color || '#8B5CF6' }}
+              >
+                <FontAwesomeIcon icon={faFolder} className="mr-1" />
+                {post.category.name || '카테고리'}
+              </span>
+            )}
+
+            {/* 제목 */}
+            <Link to={`/posts/${post.id}`}>
+              <h3 className="text-lg font-semibold text-gray-900 hover:text-purple-600 transition-colors line-clamp-2 mb-2">
+                {post.title || '제목 없음'}
+              </h3>
+            </Link>
+
+            {/* 내용 미리보기 */}
+            <p className="text-gray-600 text-sm line-clamp-2 mb-3">
+              {post.content || '내용 없음'}
+            </p>
+
+            {/* 태그 */}
+            {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {post.tags.slice(0, 3).map((tag: any) => (
+                  <span
+                    key={tag?.id || Math.random()}
+                    className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white"
+                    style={{ backgroundColor: tag?.color || '#8B5CF6' }}
+                  >
+                    <FontAwesomeIcon icon={faTags} className="mr-1" />
+                    {tag?.name || '태그'}
+                  </span>
+                ))}
+                {post.tags.length > 3 && (
+                  <span className="text-xs text-gray-500 px-2 py-0.5">
+                    +{post.tags.length - 3}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 작성일 */}
+          <div className="text-xs text-gray-500 ml-4">
+            <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
+            {formatDate(post.createdAt || new Date())}
+          </div>
+        </div>
+
+        {/* 통계 */}
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+          <div className="flex items-center space-x-4 text-sm text-gray-500">
+            <span className="flex items-center">
+              <FontAwesomeIcon icon={faEye} className="mr-1" />
+              {formatNumber(post.viewCount || 0)}
             </span>
-          )}
-
-          {/* 제목 */}
-          <Link to={`/posts/${post.id}`}>
-            <h3 className="text-lg font-semibold text-gray-900 hover:text-purple-600 transition-colors line-clamp-2 mb-2">
-              {post.title}
-            </h3>
-          </Link>
-
-          {/* 내용 미리보기 */}
-          <p className="text-gray-600 text-sm line-clamp-2 mb-3">
-            {post.content}
-          </p>
-
-          {/* 태그 */}
-          {post.tags && post.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {post.tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag.id}
-                  className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-white"
-                  style={{ backgroundColor: tag.color || '#8B5CF6' }}
-                >
-                  <FontAwesomeIcon icon={faTags} className="mr-1" />
-                  {tag.name}
-                </span>
-              ))}
-              {post.tags.length > 3 && (
-                <span className="text-xs text-gray-500 px-2 py-0.5">
-                  +{post.tags.length - 3}
-                </span>
-              )}
-            </div>
+            <span className="flex items-center">
+              <FontAwesomeIcon icon={faHeart} className="mr-1" />
+              {post.likeCount || 0}
+            </span>
+          </div>
+          
+          {activeTab === 'posts' && (
+            <Link
+              to={`/posts/${post.id}/edit`}
+              className="text-purple-600 hover:text-purple-700 font-medium text-sm"
+            >
+              <FontAwesomeIcon icon={faEdit} className="mr-1" />
+              수정
+            </Link>
           )}
         </div>
-
-        {/* 작성일 */}
-        <div className="text-xs text-gray-500 ml-4">
-          <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
-          {formatDate(post.createdAt)}
-        </div>
-      </div>
-
-      {/* 통계 */}
-      <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
-          <span className="flex items-center">
-            <FontAwesomeIcon icon={faEye} className="mr-1" />
-            {formatNumber(post.viewCount)}
-          </span>
-          <span className="flex items-center">
-            <FontAwesomeIcon icon={faHeart} className="mr-1" />
-            {post.likeCount}
-          </span>
-        </div>
-        
-        {activeTab === 'posts' && (
-          <Link
-            to={`/posts/${post.id}/edit`}
-            className="text-purple-600 hover:text-purple-700 font-medium text-sm"
-          >
-            <FontAwesomeIcon icon={faEdit} className="mr-1" />
-            수정
-          </Link>
-        )}
-      </div>
-    </article>
-  );
+      </article>
+    );
+  };
 
   return (
     <Layout>
@@ -222,17 +277,17 @@ const UserProfile: React.FC = () => {
                 {/* 프로필 이미지 */}
                 <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-6">
                   <span className="text-white text-2xl font-bold">
-                    {user.username.charAt(0)}
+                    {(user?.username || 'U').charAt(0).toUpperCase()}
                   </span>
                 </div>
 
                 {/* 사용자 정보 */}
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900 mb-1">{user.username}</h1>
-                  <p className="text-gray-600 mb-2">{user.email}</p>
+                  <h1 className="text-2xl font-bold text-gray-900 mb-1">{user?.username || '사용자'}</h1>
+                  <p className="text-gray-600 mb-2">{user?.email || '이메일 정보 없음'}</p>
                   <p className="text-sm text-gray-500">
                     <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
-                    가입일: {formatDate(user.createdAt)}
+                    가입일: {formatDate(user?.createdAt || new Date())}
                   </p>
                 </div>
               </div>
@@ -348,7 +403,10 @@ const UserProfile: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {getCurrentPosts().map(renderPostCard)}
+                  {Array.isArray(getCurrentPosts()) 
+                    ? getCurrentPosts().filter(post => post && post.id).map(renderPostCard)
+                    : <div className="text-center text-gray-500">데이터를 불러올 수 없습니다.</div>
+                  }
                 </div>
               )}
             </div>

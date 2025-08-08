@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Layout from '../../components/layout/Layout';
+import AdminLayout from '../../components/layout/AdminLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faSearch, 
@@ -14,9 +14,99 @@ import {
   faSortAmountDown,
   faCheckCircle,
   faExclamationTriangle,
-  faBan
+  faBan,
+  faHome,
+  faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 import type { Comment, Post } from '../../types';
+
+// Mock 글 데이터 (다른 페이지와 동일)
+const mockPosts: Post[] = [
+  {
+    id: '1',
+    title: '리액트 18의 새로운 기능들과 실무 적용 가이드',
+    content: '리액트 18에서 도입된 Concurrent Features, Suspense, 그리고 새로운 Hooks들을 실무에서 어떻게 활용할 수 있는지 알아보겠습니다.',
+    author: {
+      id: 'u1',
+      username: '관리자',
+      email: 'admin@example.com',
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      role: 'admin'
+    },
+    category: {
+      id: 'c1',
+      name: '개발',
+      slug: 'development',
+      description: '개발 관련 글들',
+      color: '#3B82F6',
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01')
+    },
+    tags: [
+      {
+        id: 't1',
+        name: 'React',
+        slug: 'react',
+        color: '#61DAFB',
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01')
+      },
+      {
+        id: 't2',
+        name: 'Frontend',
+        slug: 'frontend',
+        color: '#FF6B6B',
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01')
+      }
+    ],
+    images: [],
+    createdAt: new Date('2024-02-01'),
+    updatedAt: new Date('2024-02-01'),
+    viewCount: 1247,
+    likeCount: 34,
+    status: 'published'
+  },
+  {
+    id: '2',
+    title: 'TypeScript 5.0에서 달라진 점들',
+    content: 'TypeScript 5.0의 새로운 기능들과 개선사항들을 살펴보고, 실제 프로젝트에 어떻게 적용할지 알아보겠습니다.',
+    author: {
+      id: 'u1',
+      username: '관리자',
+      email: 'admin@example.com',
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01'),
+      role: 'admin'
+    },
+    category: {
+      id: 'c1',
+      name: '개발',
+      slug: 'development',
+      description: '개발 관련 글들',
+      color: '#3B82F6',
+      createdAt: new Date('2024-01-01'),
+      updatedAt: new Date('2024-01-01')
+    },
+    tags: [
+      {
+        id: 't3',
+        name: 'TypeScript',
+        slug: 'typescript',
+        color: '#3178C6',
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-01')
+      }
+    ],
+    images: [],
+    createdAt: new Date('2024-01-30'),
+    updatedAt: new Date('2024-01-30'),
+    viewCount: 892,
+    likeCount: 28,
+    status: 'published'
+  }
+];
 
 // Mock 댓글 데이터 (PostDetail과 동일)
 const mockComments: Comment[] = [
@@ -32,7 +122,9 @@ const mockComments: Comment[] = [
     },
     postId: '1',
     createdAt: new Date('2024-02-02'),
-    updatedAt: new Date('2024-02-02')
+    updatedAt: new Date('2024-02-02'),
+    likeCount: 3,
+    isLiked: false
   },
   {
     id: 'c2',
@@ -46,7 +138,9 @@ const mockComments: Comment[] = [
     },
     postId: '1',
     createdAt: new Date('2024-02-03'),
-    updatedAt: new Date('2024-02-03')
+    updatedAt: new Date('2024-02-03'),
+    likeCount: 1,
+    isLiked: false
   }
 ];
 
@@ -72,13 +166,25 @@ const CommentManagement: React.FC = () => {
         const savedComments = JSON.parse(localStorage.getItem('comments') || '[]');
         const savedPosts = JSON.parse(localStorage.getItem('posts') || '[]');
         
-        const allComments = [...(Array.isArray(savedComments) ? savedComments : []), ...mockComments];
+        // 불러온 댓글들에 누락된 속성 추가
+        const normalizedSavedComments = Array.isArray(savedComments) 
+          ? savedComments.map((comment: any) => ({
+              ...comment,
+              likeCount: comment.likeCount || 0,
+              isLiked: comment.isLiked || false
+            }))
+          : [];
+        
+        const allComments = [...normalizedSavedComments, ...mockComments];
         setComments(allComments);
-        setPosts(Array.isArray(savedPosts) ? savedPosts : []);
+        
+        // posts도 mock 데이터 포함
+        const allPosts = [...(Array.isArray(savedPosts) ? savedPosts : []), ...mockPosts];
+        setPosts(allPosts);
       } catch (error) {
         console.error('데이터 로딩 오류:', error);
         setComments(mockComments);
-        setPosts([]);
+        setPosts(mockPosts);
       } finally {
         setLoading(false);
       }
@@ -195,24 +301,47 @@ const CommentManagement: React.FC = () => {
     return post ? post.title : '(삭제된 글)';
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+  const formatDate = (date: Date | string) => {
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) {
+        return '알 수 없음';
+      }
+      return new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(dateObj);
+    } catch (error) {
+      return '알 수 없음';
+    }
   };
 
   return (
-    <Layout>
+    <AdminLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* 헤더 */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">댓글 관리</h1>
-            <p className="text-gray-600">모든 댓글을 관리하고 모니터링할 수 있습니다.</p>
+            <div className="flex items-center mb-4 justify-between">
+              <div>
+                <h1 className="text-4xl font-black text-gray-900">댓글 관리</h1>
+                <p className="text-gray-600 mt-1">모든 댓글을 관리하고 모니터링할 수 있습니다.</p>
+              </div>
+              <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6 mt-4">
+                <Link 
+                  to="/admin" 
+                  className="flex items-center hover:text-blue-600 transition-colors"
+                >
+                  <FontAwesomeIcon icon={faHome} className="mr-1" />
+                  관리자
+                </Link>
+                <FontAwesomeIcon icon={faChevronRight} className="text-gray-400" />
+                <span className="text-gray-900 font-medium">댓글 관리</span>
+              </nav>
+            </div>
           </div>
 
           {/* 통계 카드 */}
@@ -238,9 +367,16 @@ const CommentManagement: React.FC = () => {
                   <p className="text-sm font-medium text-gray-600">오늘 댓글</p>
                   <p className="text-2xl font-bold text-gray-900">
                     {comments.filter(c => {
-                      const today = new Date();
-                      const commentDate = new Date(c.createdAt);
-                      return commentDate.toDateString() === today.toDateString();
+                      try {
+                        const today = new Date();
+                        const commentDate = new Date(c.createdAt);
+                        if (isNaN(commentDate.getTime())) {
+                          return false;
+                        }
+                        return commentDate.toDateString() === today.toDateString();
+                      } catch {
+                        return false;
+                      }
                     }).length}
                   </p>
                 </div>
@@ -267,7 +403,7 @@ const CommentManagement: React.FC = () => {
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">활성 사용자</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {new Set(comments.map(c => c.author.id)).size}
+                    {new Set(comments.map(c => c?.author?.id).filter(Boolean)).size}
                   </p>
                 </div>
               </div>
@@ -381,7 +517,7 @@ const CommentManagement: React.FC = () => {
                         <td className="px-6 py-4">
                           <div className="max-w-xs">
                             <p className="text-sm text-gray-900 line-clamp-3">
-                              {comment.content}
+                              {comment?.content || '내용 없음'}
                             </p>
                           </div>
                         </td>
@@ -389,42 +525,42 @@ const CommentManagement: React.FC = () => {
                           <div className="flex items-center">
                             <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-3">
                               <span className="text-white text-xs font-bold">
-                                {comment.author.username.charAt(0)}
+                                {(comment?.author?.username || 'U').charAt(0).toUpperCase()}
                               </span>
                             </div>
                             <div>
                               <span className="text-sm font-medium text-gray-900">
-                                {comment.author.username}
+                                {comment?.author?.username || '알 수 없음'}
                               </span>
                               <p className="text-xs text-gray-500">
-                                {comment.author.email}
+                                {comment?.author?.email || '이메일 없음'}
                               </p>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <Link 
-                            to={`/posts/${comment.postId}`}
+                            to={`/posts/${comment?.postId || '#'}`}
                             className="text-sm text-purple-600 hover:text-purple-700 line-clamp-2"
                           >
-                            {getPostTitle(comment.postId)}
+                            {getPostTitle(comment?.postId || '')}
                           </Link>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
                           <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
-                          {formatDate(comment.createdAt)}
+                          {formatDate(comment?.createdAt || new Date())}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-2">
                             <Link
-                              to={`/posts/${comment.postId}`}
+                              to={`/posts/${comment?.postId || '#'}`}
                               className="text-purple-600 hover:text-purple-700 p-1"
                               title="글 보기"
                             >
                               <FontAwesomeIcon icon={faEye} />
                             </Link>
                             <button
-                              onClick={() => handleDeleteComment(comment.id)}
+                              onClick={() => handleDeleteComment(comment?.id || '')}
                               className="text-red-600 hover:text-red-700 p-1"
                               title="삭제"
                             >
@@ -446,7 +582,7 @@ const CommentManagement: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 };
 

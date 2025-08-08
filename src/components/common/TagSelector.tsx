@@ -127,21 +127,29 @@ const TagSelector: React.FC<TagSelectorProps> = ({
 
   return (
     <div className="relative" ref={dropdownRef}>
+      <label className="block text-sm font-semibold text-gray-700 mb-4">
+        <FontAwesomeIcon icon={faTag} className="mr-2 text-amber-500" />
+        태그
+      </label>
+      
       {/* 선택된 태그들 */}
       {selectedTagsData.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap gap-2 mb-4">
           {selectedTagsData.map((tag) => (
             <span
               key={tag.id}
-              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium text-white"
-              style={{ backgroundColor: tag.color || '#8B5CF6' }}
+              className="inline-flex items-center px-3 py-2 rounded-xl text-sm font-medium text-white shadow-lg transform hover:scale-105 transition-all duration-200"
+              style={{ 
+                backgroundColor: tag.color || '#8B5CF6',
+                boxShadow: `0 4px 14px 0 ${tag.color || '#8B5CF6'}25`
+              }}
             >
-              <FontAwesomeIcon icon={faTag} className="mr-1 text-xs" />
+              <FontAwesomeIcon icon={faTag} className="mr-2 text-xs" />
               {tag.name}
               <button
                 type="button"
                 onClick={() => handleTagRemove(tag.id)}
-                className="ml-2 text-white/80 hover:text-white transition-colors"
+                className="ml-2 text-white/80 hover:text-white transition-colors hover:bg-white/20 rounded-full p-1"
               >
                 <FontAwesomeIcon icon={faTimes} className="text-xs" />
               </button>
@@ -152,8 +160,8 @@ const TagSelector: React.FC<TagSelectorProps> = ({
 
       {/* 입력 필드 */}
       <div className="relative">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <FontAwesomeIcon icon={faTag} className="text-gray-400" />
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <FontAwesomeIcon icon={faTag} className="text-amber-400" />
         </div>
         <input
           ref={inputRef}
@@ -164,13 +172,13 @@ const TagSelector: React.FC<TagSelectorProps> = ({
           onKeyDown={handleKeyDown}
           placeholder={selectedTags.length >= maxTags ? `최대 ${maxTags}개까지 선택 가능` : placeholder}
           disabled={selectedTags.length >= maxTags}
-          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 disabled:bg-gray-100 disabled:cursor-not-allowed transition-all duration-200 placeholder-gray-400 bg-white/80 backdrop-blur-sm shadow-sm hover:border-amber-300"
         />
       </div>
 
       {/* 드롭다운 */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-2 bg-white/95 backdrop-blur-sm border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto">
           {filteredTags.length > 0 || canCreateNew ? (
             <ul className="py-1">
               {/* 기존 태그들 */}
@@ -223,9 +231,16 @@ const TagSelector: React.FC<TagSelectorProps> = ({
       )}
 
       {/* 도움말 텍스트 */}
-      <div className="mt-2 text-xs text-gray-500">
-        {selectedTags.length}/{maxTags} 태그 선택됨
-        {allowCreate && " • Enter키로 새 태그 생성"}
+      <div className="mt-3 text-xs text-gray-500 bg-gradient-to-r from-gray-50 to-amber-50 rounded-lg p-3 border border-gray-100">
+        <div className="flex items-center justify-between">
+          <span className="font-medium">{selectedTags.length}/{maxTags} 태그 선택됨</span>
+          {allowCreate && (
+            <span className="text-amber-600">
+              <FontAwesomeIcon icon={faPlus} className="mr-1" />
+              Enter키로 새 태그 생성
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

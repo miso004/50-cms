@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '../../components/layout/Layout';
+import AdminLayout from '../../components/layout/AdminLayout';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -13,10 +13,16 @@ import {
   faFilter,
   faUserPlus,
   faEdit,
-  faCrown
+  faCrown,
+  faHome,
+  faChevronRight,
+  faTimes,
+  faEnvelope,
+  faLock
 } from '@fortawesome/free-solid-svg-icons';
 import { UserRole } from '../../types';
 import type { User, UserRoleType } from '../../types';
+import { Link } from 'react-router-dom';
 
 // 임시 데이터
 const mockUsers: User[] = [
@@ -59,6 +65,19 @@ const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRole, setSelectedRole] = useState<string>('all');
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUser, setNewUser] = useState<{
+    username: string;
+    email: string;
+    password: string;
+    role: UserRoleType;
+  }>({
+    username: '',
+    email: '',
+    password: '',
+    role: UserRole.USER
+  });
+  const [addUserLoading, setAddUserLoading] = useState(false);
 
 
   useEffect(() => {
@@ -109,6 +128,73 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handleAddUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!newUser.username.trim() || !newUser.email.trim() || !newUser.password.trim()) {
+      alert('모든 필드를 입력해주세요.');
+      return;
+    }
+
+    // 이메일 형식 검증
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newUser.email)) {
+      alert('올바른 이메일 형식을 입력해주세요.');
+      return;
+    }
+
+    // 비밀번호 길이 검증
+    if (newUser.password.length < 6) {
+      alert('비밀번호는 최소 6자 이상이어야 합니다.');
+      return;
+    }
+
+    setAddUserLoading(true);
+
+    try {
+      // 새 사용자 생성
+      const newUserData: User = {
+        id: Date.now().toString(),
+        username: newUser.username.trim(),
+        email: newUser.email.trim(),
+        role: newUser.role,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+
+      // 사용자 목록에 추가
+      setUsers(prev => [newUserData, ...prev]);
+
+      // 폼 초기화
+      setNewUser({
+        username: '',
+        email: '',
+        password: '',
+        role: UserRole.USER
+      });
+
+      // 모달 닫기
+      setShowAddUserModal(false);
+      
+      alert('새 사용자가 성공적으로 추가되었습니다.');
+    } catch (error) {
+      console.error('사용자 추가 실패:', error);
+      alert('사용자 추가에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setAddUserLoading(false);
+    }
+  };
+
+  const closeAddUserModal = () => {
+    setShowAddUserModal(false);
+    setNewUser({
+      username: '',
+      email: '',
+      password: '',
+      role: UserRole.USER
+    });
+  };
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('ko-KR', {
       year: 'numeric',
@@ -148,7 +234,7 @@ const UserManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Layout>
+      <AdminLayout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
@@ -157,23 +243,35 @@ const UserManagement: React.FC = () => {
             </div>
           </div>
         </div>
-      </Layout>
+      </AdminLayout>
     );
   }
 
   return (
-    <Layout>
+    <AdminLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb */}
+        
+
         {/* 헤더 */}
         <div className="mb-8">
-          <div className="flex items-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center mr-4">
-              <FontAwesomeIcon icon={faUsers} className="text-white text-xl" />
-            </div>
+          <div className="flex items-center mb-4 justify-between">
+            
             <div>
               <h1 className="text-4xl font-black text-gray-900">사용자 관리</h1>
               <p className="text-gray-600 mt-1">사용자 목록 및 권한을 관리하세요</p>
             </div>
+            <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6 mt-4">
+          <Link 
+            to="/admin" 
+            className="flex items-center hover:text-blue-600 transition-colors"
+          >
+            <FontAwesomeIcon icon={faHome} className="mr-1" />
+            관리자
+          </Link>
+          <FontAwesomeIcon icon={faChevronRight} className="text-gray-400" />
+          <span className="text-gray-900 font-medium">사용자 관리</span>
+        </nav>
           </div>
           
           {/* 통계 요약 */}
@@ -273,7 +371,10 @@ const UserManagement: React.FC = () => {
             </div>
             
             <div className="flex items-end">
-              <Button className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-xl py-3">
+              <Button 
+                onClick={() => setShowAddUserModal(true)}
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-xl py-3"
+              >
                 <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
                 새 사용자
               </Button>
@@ -314,7 +415,10 @@ const UserManagement: React.FC = () => {
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">사용자가 없습니다</h3>
               <p className="text-gray-600 mb-6">검색 조건에 맞는 사용자가 없습니다.</p>
-              <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0">
+              <Button 
+                onClick={() => setShowAddUserModal(true)}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0"
+              >
                 <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
                 첫 번째 사용자 추가하기
               </Button>
@@ -343,16 +447,14 @@ const UserManagement: React.FC = () => {
                     <tr key={user.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-12 w-12">
-                            <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-                              <span className="text-lg font-bold text-white">
-                                {user.username.charAt(0).toUpperCase()}
-                              </span>
-                            </div>
+                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-4">
+                            <span className="text-white font-bold text-lg">
+                              {(user?.username || 'U').charAt(0).toUpperCase()}
+                            </span>
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-bold text-gray-900 flex items-center">
-                              {user.username}
+                          <div>
+                            <div className="font-semibold text-gray-900 flex items-center">
+                              {user?.username || '작성자 정보 없음'}
                               {user.role === UserRole.ADMIN && (
                                 <FontAwesomeIcon 
                                   icon={faCrown} 
@@ -361,8 +463,9 @@ const UserManagement: React.FC = () => {
                                 />
                               )}
                             </div>
-                            <div className="text-sm text-gray-500">
-                              {user.email}
+                            <div className="text-sm text-gray-500 flex items-center">
+                              <FontAwesomeIcon icon={faEnvelope} className="mr-1" />
+                              {user?.email || '이메일 없음'}
                             </div>
                           </div>
                         </div>
@@ -379,7 +482,7 @@ const UserManagement: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div className="flex items-center">
                           <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
-                          {formatDate(user.createdAt)}
+                          {formatDate(user?.createdAt || new Date())}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -410,8 +513,121 @@ const UserManagement: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* 새 사용자 추가 모달 */}
+        {showAddUserModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center">
+                  <FontAwesomeIcon icon={faUserPlus} className="mr-2 text-blue-600" />
+                  새 사용자 추가
+                </h3>
+                <button
+                  onClick={closeAddUserModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <FontAwesomeIcon icon={faTimes} className="text-xl" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleAddUser} className="p-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <FontAwesomeIcon icon={faUser} className="mr-1" />
+                      사용자명
+                    </label>
+                    <input
+                      type="text"
+                      value={newUser.username}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, username: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      placeholder="사용자명을 입력하세요"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <FontAwesomeIcon icon={faEnvelope} className="mr-1" />
+                      이메일
+                    </label>
+                    <input
+                      type="email"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      placeholder="이메일을 입력하세요"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <FontAwesomeIcon icon={faLock} className="mr-1" />
+                      비밀번호
+                    </label>
+                    <input
+                      type="password"
+                      value={newUser.password}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      placeholder="비밀번호를 입력하세요"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <FontAwesomeIcon icon={faUserShield} className="mr-1" />
+                      권한
+                    </label>
+                    <select
+                      value={newUser.role}
+                      onChange={(e) => setNewUser(prev => ({ ...prev, role: e.target.value as UserRoleType }))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    >
+                      <option value={UserRole.USER}>일반사용자</option>
+                      <option value={UserRole.ADMIN}>관리자</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="flex space-x-3 mt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeAddUserModal}
+                    className="flex-1"
+                    disabled={addUserLoading}
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0"
+                    disabled={addUserLoading}
+                  >
+                    {addUserLoading ? (
+                      <div className="flex items-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        추가 중...
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <FontAwesomeIcon icon={faUserPlus} className="mr-2" />
+                        사용자 추가
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
-    </Layout>
+    </AdminLayout>
   );
 };
 

@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import Layout from '../../components/layout/Layout';
 import Input from '../../components/common/Input';
 import Button from '../../components/common/Button';
+import SocialAuthButtons from '../../components/common/SocialAuthButtons';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -33,9 +34,18 @@ const Login: React.FC = () => {
     }));
   };
 
+  // 소셜 로그인 핸들러
+  const handleGoogleLogin = () => {
+    alert('구글 로그인은 추후 지원될 예정입니다.');
+  };
+
+  const handleKakaoLogin = () => {
+    alert('카카오톡 로그인은 추후 지원될 예정입니다.');
+  };
+
   return (
     <Layout>
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex mt-[-100px] items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8">
           <div>
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -48,8 +58,24 @@ const Login: React.FC = () => {
               </Link>
             </p>
           </div>
+
+          {/* 소셜 로그인 버튼 */}
+          <SocialAuthButtons
+            onGoogle={handleGoogleLogin}
+            onKakao={handleKakaoLogin}
+            type="login"
+          />
+
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">또는 이메일로 로그인</span>
+            </div>
+          </div>
           
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div className="space-y-4">
               <Input
                 label="이메일"

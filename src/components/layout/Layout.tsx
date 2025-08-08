@@ -24,23 +24,32 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return location.pathname === path;
   };
 
+  const isHomePage = location.pathname === '/';
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`${isHomePage ? 'h-screen' : 'min-h-screen'} bg-gray-50 relative`}>
+      {/* Sub-page Header Image */}
+      {!isHomePage && (
+        <div 
+          className="w-full h-[250px] bg-cover bg-center bg-no-repeat relative"
+          style={{
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2072&q=80')`
+          }}
+        />
+      )}
+      
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200/50">
+      <header className="absolute top-0 left-0 w-full z-50 bg-transparent">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+          <div className={`flex justify-between items-center ${isHomePage ? 'h-20' : 'h-[70px]'}`}>
             <div className="flex items-center">
-              <Link to="/" className="flex items-center space-x-2 text-2xl font-black text-gray-900 hover:text-purple-600 transition-colors">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white text-sm font-bold">W</span>
-                </div>
+              <Link to="/" className="text-2xl font-black text-white hover:text-purple-200 transition-colors">
                 <span>WIDSoft</span>
               </Link>
             </div>
             
             {/* 데스크톱 네비게이션 */}
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="hidden">
               <Link
                 to="/"
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center space-x-2 ${
@@ -79,7 +88,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </nav>
             
             {/* 모바일 네비게이션 */}
-            <nav className="md:hidden flex items-center space-x-1">
+            <nav className="hidden">
               <Link
                 to="/"
                 className={`p-2 rounded-lg text-sm transition-all duration-200 ${
@@ -119,35 +128,35 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* 사용자 메뉴 */}
             <div className="flex items-center space-x-3">
               {user ? (
-                <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-3 bg-gray-100 rounded-2xl px-4 py-2">
-                    <Link to="/profile" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
-                      <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-                        <span className="text-white text-sm font-bold">{user.username.charAt(0).toUpperCase()}</span>
-                      </div>
-                      <span className="text-sm font-semibold text-gray-700">{user.username}</span>
-                    </Link>
-                    <button
-                      onClick={logout}
-                      className="text-sm text-gray-500 hover:text-red-600 transition-colors ml-2"
-                      title="로그아웃"
-                    >
-                      <FontAwesomeIcon icon={faSignOutAlt} />
-                    </button>
+                                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 bg-white/20 rounded-2xl px-4 py-2">
+                      <Link to="/profile" className="flex items-center space-x-2 hover:opacity-80 transition-opacity">
+                        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-sm font-bold">{user.username.charAt(0).toUpperCase()}</span>
+                        </div>
+                        <span className="text-sm font-semibold text-white">{user.username}</span>
+                      </Link>
+                      <button
+                        onClick={logout}
+                        className="text-sm text-white hover:text-red-300 transition-colors ml-2"
+                        title="로그아웃"
+                      >
+                        <FontAwesomeIcon icon={faSignOutAlt} />
+                      </button>
+                    </div>
                   </div>
-                </div>
               ) : (
                 <div className="flex items-center space-x-3">
                   <Link
                     to="/login"
-                    className="text-gray-600 hover:text-purple-600 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-purple-50/50 flex items-center space-x-2"
+                    className="text-white hover:text-purple-200 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-purple-50/50 flex items-center space-x-2"
                   >
                     <FontAwesomeIcon icon={faSignInAlt} />
                     <span>로그인</span>
                   </Link>
                   <Link
                     to="/signup"
-                    className="text-gray-600 hover:text-purple-600 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-purple-50/50 flex items-center space-x-2"
+                    className="text-white hover:text-purple-200 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 hover:bg-purple-50/50 flex items-center space-x-2"
                   >
                     <FontAwesomeIcon icon={faUserPlus} />
                     <span>회원가입</span>
@@ -155,30 +164,36 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </div>
               )}
               
-              {/* 관리자 아이콘 - 회원가입 오른쪽에 위치 */}
-              <Link
-                to="/admin"
-                className={`p-2 w-10 h-10 rounded-xl text-lg transition-all duration-200 flex items-center justify-center ${
-                  location.pathname.startsWith('/admin') 
-                    ? 'text-purple-600 bg-purple-50 shadow-sm' 
-                    : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50/50'
-                }`}
-                title="관리자 페이지"
+              {/* 관리자 아이콘 - 새 창으로 열기 */}
+              <button
+                                  onClick={() => {
+                    try {
+                      const adminWindow = window.open('/admin', '_blank', 'width=1400,height=800,scrollbars=yes,resizable=yes,menubar=yes,toolbar=yes,location=yes,status=yes');
+                      if (!adminWindow) {
+                        alert('팝업이 차단되었습니다. 팝업 차단을 해제하고 다시 시도해주세요.');
+                      }
+                    } catch (error) {
+                      console.error('관리자 페이지 열기 오류:', error);
+                      alert('관리자 페이지를 열 수 없습니다. 다시 시도해주세요.');
+                    }
+                  }}
+                className="p-2 w-10 h-10 rounded-xl text-lg transition-all duration-200 flex items-center justify-center text-white hover:text-purple-200 hover:bg-purple-50/50"
+                title="관리자 페이지 (새 창)"
               >
                 <FontAwesomeIcon icon={faCog} />
-              </Link>
+              </button>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1">
+      <main className={`${isHomePage ? 'h-full w-full' : ''}`}>
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-800 text-white mt-auto">
+      <footer className="relative bg-gray-900 text-white z-40">
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>

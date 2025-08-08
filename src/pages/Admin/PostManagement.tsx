@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Layout from '../../components/layout/Layout';
+import AdminLayout from '../../components/layout/AdminLayout';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faSearch, 
@@ -14,7 +14,9 @@ import {
   faFilter,
   faSortAmountDown,
   faCheckCircle,
-  faExclamationTriangle
+  faExclamationTriangle,
+  faHome,
+  faChevronRight
 } from '@fortawesome/free-solid-svg-icons';
 import type { Post, Comment } from '../../types';
 
@@ -206,13 +208,28 @@ const PostManagement: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <AdminLayout>
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* 헤더 */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">글 관리</h1>
-            <p className="text-gray-600">모든 글을 관리하고 모니터링할 수 있습니다.</p>
+            <div className="flex items-center mb-4 justify-between">
+              <div>
+                <h1 className="text-4xl font-black text-gray-900">글 관리</h1>
+                <p className="text-gray-600 mt-1">모든 글을 관리하고 모니터링할 수 있습니다.</p>
+              </div>
+              <nav className="flex items-center space-x-2 text-sm text-gray-500 mb-6 mt-4">
+                <Link 
+                  to="/admin" 
+                  className="flex items-center hover:text-blue-600 transition-colors"
+                >
+                  <FontAwesomeIcon icon={faHome} className="mr-1" />
+                  관리자
+                </Link>
+                <FontAwesomeIcon icon={faChevronRight} className="text-gray-400" />
+                <span className="text-gray-900 font-medium">글 관리</span>
+              </nav>
+            </div>
           </div>
 
           {/* 통계 카드 */}
@@ -478,7 +495,7 @@ const PostManagement: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </AdminLayout>
   );
 };
 

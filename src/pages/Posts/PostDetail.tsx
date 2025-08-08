@@ -13,7 +13,9 @@ import {
   faTrash,
   faTags,
   faComment,
-  faFolder
+  faFolder,
+  faTimes,
+  faExpand
 } from '@fortawesome/free-solid-svg-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Post, Comment } from '../../types';
@@ -155,7 +157,9 @@ const mockComments: Comment[] = [
     },
     postId: '1',
     createdAt: new Date('2024-02-02'),
-    updatedAt: new Date('2024-02-02')
+    updatedAt: new Date('2024-02-02'),
+    likeCount: 2,
+    isLiked: false
   },
   {
     id: 'c2',
@@ -169,7 +173,9 @@ const mockComments: Comment[] = [
     },
     postId: '1',
     createdAt: new Date('2024-02-03'),
-    updatedAt: new Date('2024-02-03')
+    updatedAt: new Date('2024-02-03'),
+    likeCount: 1,
+    isLiked: false
   }
 ];
 
@@ -182,41 +188,72 @@ const PostDetail: React.FC = () => {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [commentCount, setCommentCount] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
       setLoading(true);
       await new Promise(resolve => setTimeout(resolve, 600));
       
-      // 로컬 스토리지에서 사용자가 작성한 글 가져오기
-      const savedPosts = JSON.parse(localStorage.getItem('posts') || '[]');
-      
-      // Mock 데이터와 실제 작성된 글 합치기
-      const allPosts = [...savedPosts, ...mockPosts];
-      
-      const foundPost = allPosts.find(p => p.id === id);
-      if (foundPost) {
-        setPost(foundPost);
+      try {
+        // 로컬 스토리지에서 사용자가 작성한 글 가져오기
+        const savedPosts = JSON.parse(localStorage.getItem('posts') || '[]');
         
-        // 조회수 증가
-        incrementViewCount(foundPost.id);
+        // Mock 데이터와 실제 작성된 글 합치기
+        const allPosts = [...(Array.isArray(savedPosts) ? savedPosts : []), ...mockPosts];
         
-        // 사용자의 좋아요/북마크 상태 확인
-        if (user) {
-          setLiked(isPostLiked(user.id, foundPost.id));
-          setBookmarked(isPostBookmarked(user.id, foundPost.id));
+        const foundPost = allPosts.find(p => p?.id === id);
+        if (foundPost) {
+          setPost(foundPost);
+          
+          // 조회수 증가 - 안전한 처리
+          try {
+            incrementViewCount(foundPost.id);
+          } catch (error) {
+            console.error('조회수 증가 오류:', error);
+          }
+          
+          // 사용자의 좋아요/북마크 상태 확인 - 안전한 처리
+          if (user) {
+            try {
+              setLiked(isPostLiked(user.id, foundPost.id));
+              setBookmarked(isPostBookmarked(user.id, foundPost.id));
+            } catch (error) {
+              console.error('사용자 상태 확인 오류:', error);
+              setLiked(false);
+              setBookmarked(false);
+            }
+          }
+          
+          // 댓글 수 계산 - 안전한 처리
+          try {
+            const savedComments = JSON.parse(localStorage.getItem('comments') || '[]');
+            // 저장된 댓글에 누락된 속성 추가
+            const normalizedSavedComments = Array.isArray(savedComments) 
+              ? savedComments.map((comment: any) => ({
+                  ...comment,
+                  likeCount: comment.likeCount || 0,
+                  isLiked: comment.isLiked || false
+                }))
+              : [];
+            
+            const postComments = [
+              ...normalizedSavedComments.filter((c: any) => c?.postId === id),
+              ...mockComments.filter(c => c?.postId === id)
+            ];
+            
+            setCommentCount(postComments.length);
+          } catch (error) {
+            console.error('댓글 데이터 로딩 오류:', error);
+            setCommentCount(0);
+          }
         }
-        
-        // 댓글 수 계산
-        const savedComments = JSON.parse(localStorage.getItem('comments') || '[]');
-        const postComments = [
-          ...savedComments.filter((c: Comment) => c.postId === id),
-          ...mockComments.filter(c => c.postId === id)
-        ];
-        
-        setCommentCount(postComments.length);
+      } catch (error) {
+        console.error('글 데이터 로딩 오류:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     if (id) {
@@ -224,14 +261,22 @@ const PostDetail: React.FC = () => {
     }
   }, [id]);
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+  const formatDate = (date: Date | string) => {
+    try {
+      const dateObj = new Date(date);
+      if (isNaN(dateObj.getTime())) {
+        return '날짜 정보 없음';
+      }
+      return new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(dateObj);
+    } catch (error) {
+      return '날짜 정보 없음';
+    }
   };
 
   const formatNumber = (num: number) => {
@@ -247,14 +292,19 @@ const PostDetail: React.FC = () => {
       return;
     }
 
-    const newLikedState = togglePostLike(user.id, post.id);
-    setLiked(newLikedState);
-    
-    // 글 상태 업데이트
-    setPost(prev => prev ? {
-      ...prev,
-      likeCount: prev.likeCount + (newLikedState ? 1 : -1)
-    } : null);
+    try {
+      const newLikedState = togglePostLike(user.id, post.id);
+      setLiked(newLikedState);
+      
+      // 글 상태 업데이트
+      setPost(prev => prev ? {
+        ...prev,
+        likeCount: Math.max(0, (prev.likeCount || 0) + (newLikedState ? 1 : -1))
+      } : null);
+    } catch (error) {
+      console.error('좋아요 처리 오류:', error);
+      alert('좋아요 처리 중 오류가 발생했습니다.');
+    }
   };
 
   const handleBookmark = () => {
@@ -263,8 +313,13 @@ const PostDetail: React.FC = () => {
       return;
     }
 
-    const newBookmarkedState = togglePostBookmark(user.id, post.id);
-    setBookmarked(newBookmarkedState);
+    try {
+      const newBookmarkedState = togglePostBookmark(user.id, post.id);
+      setBookmarked(newBookmarkedState);
+    } catch (error) {
+      console.error('북마크 처리 오류:', error);
+      alert('북마크 처리 중 오류가 발생했습니다.');
+    }
   };
 
   const handleShare = async () => {
@@ -282,14 +337,16 @@ const PostDetail: React.FC = () => {
 
 
   const handleDelete = async () => {
-    if (!confirm('정말로 이 글을 삭제하시겠습니까? 삭제된 글은 복구할 수 없습니다.')) {
+    if (!post || !confirm('정말로 이 글을 삭제하시겠습니까? 삭제된 글은 복구할 수 없습니다.')) {
       return;
     }
 
     try {
       // 로컬 스토리지에서 글 삭제
       const existingPosts = JSON.parse(localStorage.getItem('posts') || '[]');
-      const updatedPosts = existingPosts.filter((p: Post) => p.id !== post!.id);
+      const updatedPosts = Array.isArray(existingPosts) 
+        ? existingPosts.filter((p: any) => p?.id !== post.id)
+        : [];
       localStorage.setItem('posts', JSON.stringify(updatedPosts));
       
       alert('글이 삭제되었습니다.');
@@ -300,11 +357,27 @@ const PostDetail: React.FC = () => {
     }
   };
 
+  const handleImageClick = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setImageModalOpen(true);
+  };
+
+  const closeImageModal = () => {
+    setImageModalOpen(false);
+    setSelectedImage(null);
+  };
+
+  const handleModalKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      closeImageModal();
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
         <div className="min-h-screen bg-gray-50">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="animate-pulse">
               <div className="h-8 bg-gray-200 rounded mb-6 w-3/4"></div>
               <div className="h-4 bg-gray-200 rounded mb-4 w-1/2"></div>
@@ -345,8 +418,8 @@ const PostDetail: React.FC = () => {
     <Layout>
       <div className="min-h-screen bg-gray-50">
         {/* 상단 네비게이션 */}
-        <div className="bg-white border-b border-gray-200 sticky top-20 z-40">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => navigate('/posts')}
@@ -356,7 +429,7 @@ const PostDetail: React.FC = () => {
                 글 목록
               </button>
               
-              {user && user.id === post.author.id && (
+              {user && post?.author?.id && user.id === post.author.id && (
                 <div className="flex items-center space-x-2">
                   <Link
                     to={`/posts/${post.id}/edit`}
@@ -379,35 +452,35 @@ const PostDetail: React.FC = () => {
         </div>
 
         {/* 메인 콘텐츠 */}
-        <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <article className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           {/* 헤더 */}
           <header className="mb-12">
             <div className="mb-2">
               {/* 카테고리 표시 */}
-              {post.category && (
+              {post?.category && (
                 <span 
                   className="inline-flex h-10 items-center px-3 py-1 rounded-full text-sm font-medium text-white mb-4"
-                  style={{ backgroundColor: post.category.color }}
+                  style={{ backgroundColor: post.category.color || '#8B5CF6' }}
                 >
                   <FontAwesomeIcon icon={faFolder} className="mr-1" />
-                  {post.category.name}
+                  {post.category.name || '카테고리'}
                 </span>
               )}
               <h1 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight mb-6 mt-7">
-                {post.title}
+                {post?.title || '제목 없음'}
               </h1>
 
               {/* 태그 표시 */}
-              {post.tags && post.tags.length > 0 && (
+              {post?.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-4">
                   {post.tags.map((tag) => (
                     <span
-                      key={tag.id}
+                      key={tag?.id || Math.random()}
                       className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium text-white"
-                      style={{ backgroundColor: tag.color || '#8B5CF6' }}
+                      style={{ backgroundColor: tag?.color || '#8B5CF6' }}
                     >
                       <FontAwesomeIcon icon={faTags} className="mr-1" />
-                      {tag.name}
+                      {tag?.name || '태그'}
                     </span>
                   ))}
                 </div>
@@ -419,14 +492,14 @@ const PostDetail: React.FC = () => {
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center mr-4">
                   <span className="text-white font-bold text-lg">
-                    {post.author.username.charAt(0)}
+                    {(post?.author?.username || 'U').charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <div>
-                  <div className="font-semibold text-gray-900">{post.author.username}</div>
+                  <div className="font-semibold text-gray-900">{post?.author?.username || '작성자 정보 없음'}</div>
                   <div className="text-sm text-gray-500 flex items-center">
                     <FontAwesomeIcon icon={faCalendarAlt} className="mr-1" />
-                    {formatDate(post.createdAt)}
+                    {formatDate(post?.createdAt || new Date())}
                   </div>
                 </div>
               </div>
@@ -435,15 +508,15 @@ const PostDetail: React.FC = () => {
               <div className="flex items-center space-x-6 text-gray-500">
                 <span className="flex items-center">
                   <FontAwesomeIcon icon={faEye} className="mr-2" />
-                  {formatNumber(post.viewCount)}
+                  {formatNumber(post?.viewCount || 0)}
                 </span>
                 <span className="flex items-center">
                   <FontAwesomeIcon icon={faHeart} className="mr-2" />
-                  {post.likeCount}
+                  {post?.likeCount || 0}
                 </span>
                 <span className="flex items-center">
                   <FontAwesomeIcon icon={faComment} className="mr-2" />
-                  {commentCount}
+                  {commentCount || 0}
                 </span>
               </div>
             </div>
@@ -484,47 +557,42 @@ const PostDetail: React.FC = () => {
             </div>
           </header>
 
-          {/* 이미지 갤러리 */}
-          {post.images && post.images.length > 0 && (
-            <div className="mb-8">
+          {/* 글 내용 - 위치를 위로 이동 */}
+          <div className="prose prose-lg max-w-none mb-8">
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                <FontAwesomeIcon icon={faEye} className="mr-2 text-purple-600" />
+                글 내용
+              </h3>
+              <div className="whitespace-pre-wrap leading-relaxed text-gray-800">
+                {post?.content || '내용이 없습니다.'}
+              </div>
+            </div>
+          </div>
+
+          {/* 이미지 갤러리 - 위치를 아래로 이동 */}
+          {post?.images && Array.isArray(post.images) && post.images.length > 0 && (
+            <div className="mb-16">
               <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
                 <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
                   <FontAwesomeIcon icon={faEye} className="mr-2 text-purple-600" />
                   첨부 이미지 ({post.images.length}개)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {post.images.map((image, index) => (
+                  {post.images.filter(Boolean).map((image, index) => (
                     <div key={index} className="relative group cursor-pointer">
                       <img
                         src={image}
                         alt={`첨부 이미지 ${index + 1}`}
                         className="w-full h-64 object-cover rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group-hover:scale-105"
-                        onClick={() => {
-                          // 클릭 시 이미지 확대
-                          const newWindow = window.open();
-                          if (newWindow) {
-                            newWindow.document.write(`
-                              <html>
-                                <head>
-                                  <title>이미지 보기 - ${post.title}</title>
-                                  <style>
-                                    body { margin: 0; background: #000; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-                                    img { max-width: 100%; max-height: 100vh; object-fit: contain; }
-                                  </style>
-                                </head>
-                                <body>
-                                  <img src="${image}" alt="첨부 이미지 ${index + 1}" />
-                                </body>
-                              </html>
-                            `);
-                          }
-                        }}
+                        onClick={() => handleImageClick(image)}
                       />
                       <div className="absolute top-3 left-3 bg-black bg-opacity-60 text-white px-3 py-1 rounded-full text-sm font-medium">
                         {index + 1}
                       </div>
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100">
-                        <div className="text-white text-sm font-medium bg-black bg-opacity-50 px-3 py-1 rounded-full">
+                        <div className="text-white text-sm font-medium bg-black bg-opacity-50 px-3 py-1 rounded-full flex items-center">
+                          <FontAwesomeIcon icon={faExpand} className="mr-1" />
                           클릭하여 확대
                         </div>
                       </div>
@@ -535,18 +603,37 @@ const PostDetail: React.FC = () => {
             </div>
           )}
 
-          {/* 글 내용 */}
-          <div className="prose prose-lg max-w-none mb-16">
-            <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100">
-              <div className="whitespace-pre-wrap leading-relaxed text-gray-800">
-                {post.content}
+          {/* 댓글 섹션 */}
+          {id && <CommentSection postId={id} />}
+        </article>
+
+        {/* 이미지 모달 */}
+        {imageModalOpen && selectedImage && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+            onClick={closeImageModal}
+            onKeyDown={handleModalKeyDown}
+            tabIndex={0}
+          >
+            <div className="relative max-w-7xl max-h-full">
+              <img
+                src={selectedImage}
+                alt="확대된 이미지"
+                className="max-w-full max-h-full object-contain rounded-lg"
+                onClick={(e) => e.stopPropagation()}
+              />
+              <button
+                onClick={closeImageModal}
+                className="absolute top-4 right-4 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all"
+              >
+                <FontAwesomeIcon icon={faTimes} className="text-xl" />
+              </button>
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-4 py-2 rounded-full text-sm">
+                ESC 키를 누르거나 클릭하여 닫기
               </div>
             </div>
           </div>
-
-          {/* 댓글 섹션 */}
-          <CommentSection postId={id!} />
-        </article>
+        )}
       </div>
     </Layout>
   );

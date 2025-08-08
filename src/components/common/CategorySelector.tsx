@@ -22,8 +22,8 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
 
   return (
     <div className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        <FontAwesomeIcon icon={faFolder} className="mr-2" />
+      <label className="block text-sm font-semibold text-gray-700 mb-4">
+        <FontAwesomeIcon icon={faFolder} className="mr-2 text-emerald-500" />
         카테고리
       </label>
       
@@ -33,22 +33,24 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
           <button
             type="button"
             onClick={() => onChange(undefined)}
-            className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+            className={`p-3 rounded-xl border-2 transition-all duration-200 text-left transform hover:scale-105 bg-white ${
               !selectedCategoryId
-                ? 'border-gray-400 bg-gray-50 shadow-sm'
-                : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                ? 'border-emerald-400 shadow-lg shadow-emerald-500/10'
+                : 'border-gray-200 hover:border-emerald-300 hover:shadow-md'
             }`}
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-4 h-4 rounded-full bg-gray-400" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="w-3 h-3 rounded-full bg-gray-400 mr-2" />
+                <div className="text-sm font-medium text-gray-600">
+                  카테고리 없음
+                </div>
+              </div>
               {!selectedCategoryId && (
                 <FontAwesomeIcon icon={faCheck} className="text-gray-600" />
               )}
             </div>
-            <div className="text-sm font-medium text-gray-600">
-              카테고리 없음
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-gray-500 mt-1 ml-5">
               분류하지 않음
             </div>
           </button>
@@ -62,21 +64,25 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
               key={category.id}
               type="button"
               onClick={() => onChange(category.id)}
-              className={`p-4 rounded-xl border-2 transition-all duration-200 text-left ${
+              className={`p-3 rounded-xl border-2 transition-all duration-200 text-left transform hover:scale-105 bg-white ${
                 isSelected
-                  ? 'border-current shadow-sm'
-                  : 'border-gray-200 hover:border-current hover:bg-gray-50'
+                  ? 'border-current shadow-lg shadow-current/10'
+                  : 'border-gray-200 hover:border-current hover:shadow-md'
               }`}
               style={{
-                color: isSelected ? category.color : undefined,
-                backgroundColor: isSelected ? `${category.color}10` : undefined
+                color: isSelected ? category.color : undefined
               }}
             >
-              <div className="flex items-center justify-between mb-2">
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: category.color }}
-                />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div
+                    className="w-3 h-3 rounded-full mr-2"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <div className="text-sm font-medium text-gray-900">
+                    {category.name}
+                  </div>
+                </div>
                 {isSelected && (
                   <FontAwesomeIcon 
                     icon={faCheck} 
@@ -84,11 +90,8 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
                   />
                 )}
               </div>
-              <div className="text-sm font-medium text-gray-900">
-                {category.name}
-              </div>
               {category.description && (
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 mt-1 ml-5">
                   {category.description}
                 </div>
               )}
@@ -99,18 +102,18 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
 
       {/* 선택된 카테고리 표시 */}
       {selectedCategory && (
-        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+        <div className="mt-4 p-4 bg-gradient-to-r from-white to-gray-50 rounded-xl border border-gray-200 shadow-sm">
           <div className="flex items-center text-sm">
             <div
-              className="w-3 h-3 rounded-full mr-2"
+              className="w-3 h-3 rounded-full mr-2 shadow-sm"
               style={{ backgroundColor: selectedCategory.color }}
             />
-            <span className="font-medium text-gray-900">
+            <span className="font-semibold text-gray-900">
               선택된 카테고리: {selectedCategory.name}
             </span>
           </div>
           {selectedCategory.description && (
-            <div className="text-xs text-gray-600 mt-1 ml-5">
+            <div className="text-xs text-gray-600 mt-2 ml-5 leading-relaxed">
               {selectedCategory.description}
             </div>
           )}
