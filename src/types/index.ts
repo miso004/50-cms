@@ -103,7 +103,17 @@ export interface Comment {
   updatedAt: Date;
   likeCount: number;
   isLiked: boolean;
+  status?: CommentStatusType;
 }
+
+// 댓글 상태
+export const CommentStatus = {
+  APPROVED: 'approved',
+  PENDING: 'pending',
+  REJECTED: 'rejected'
+} as const;
+
+export type CommentStatusType = typeof CommentStatus[keyof typeof CommentStatus];
 
 // 글 작성 폼 타입
 export interface PostFormData {

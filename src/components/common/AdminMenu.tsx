@@ -71,7 +71,7 @@ const AdminMenu: React.FC<AdminMenuProps> = ({ className = '' }) => {
 
   return (
     <div className={`bg-black border-b border-gray-800 shadow-sm ${className}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
         <nav className="flex justify-center space-x-8 overflow-x-auto">
           {menuItems.map((item) => (
             <Link

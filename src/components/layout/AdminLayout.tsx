@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AdminMenu from '../common/AdminMenu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,11 +10,7 @@ import {
   faCog
 } from '@fortawesome/free-solid-svg-icons';
 
-interface AdminLayoutProps {
-  children: React.ReactNode;
-}
-
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+const AdminLayout: React.FC = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
 
@@ -26,7 +22,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     <div className="min-h-screen bg-gray-50">
       {/* 관리자 헤더 */}
       <header className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <Link to="/admin" className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors">
@@ -72,7 +68,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       
       {/* 메인 콘텐츠 */}
       <main className="min-h-screen bg-gray-50">
-        {children}
+        <Outlet />
       </main>
     </div>
   );
